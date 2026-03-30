@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>🌙 50元存錢計畫 🌙</title>
+
+<style>
+:root{
+--sky:#0b1220;
+--blue:#89bdf0;
+--glass:rgba(255,255,255,0.08);
+--glass-border:rgba(255,255,255,0.15);
+--gold-glow:rgba(255,228,132,0.5);
+}
+
+body{
+margin:0;
+padding:15px;
+font-family:-apple-system;
+background:linear-gradient(135deg,#0b1220,#162447);
+display:flex;
+justify-content:center;
+min-height:100vh;
+}
+
+.container{
+background:var(--glass);
+backdrop-filter:blur(20px);
+max-width:500px;
+width:100%;
+padding:20px;
+border-radius:25px;
+color:white;
+text-align:center;
+}
+
+.stats{margin-bottom:15px;}
+.stat{
+display:flex;
+justify-content:space-between;
+margin-bottom:8px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(10,1fr);
+gap:5px;
+}
+
+.box{
+aspect-ratio:1;
+border-radius:5px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:9px;
+cursor:pointer;
+background:rgba(255,255,255,0.05);
+color:rgba(255,255,255,0.4);
+}
+
+.box.selected{
+background:white;
+color:#0b1220;
+font-weight:bold;
+}
+
+input{
+border:none;
+border-radius:5px;
+padding:3px;
+text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h3>🌙 50元存錢計畫 🌙</h3>
+
+<div class="stats">
+<div class="stat">累計 <span>$<span id="currentTotal">0</span></span></div>
+<div class="stat">總目標 <span>$18,250</span></div>
+<div class="stat">完成 <span><span id="days">0</span>/365</span></div>
+
+<div class="stat">
+額外存入 
+<span>
+<input id="extraInput" type="number" placeholder="金額">
+<button onclick="addExtra()">加入</button>
+</span>
+</div>
+
+<div class="stat">
+額外累計 <span>$<span id="extraTotal">0</span></span>
+</div>
+
+</div>
+
+<div class="grid" id="grid"></div>
+
+<button onclick="resetData()">重設</button>
+
+</div>
+
+<script>
+
+const DAILY = 50
+
+const grid=document.getElementById('grid')
+const currentTotalEl=document.getElementById('currentTotal')
+const daysEl=document.getElementById('days')
+
+let history=JSON.parse(localStorage.getItem('save_365_v3'))||[]
+let extraTotal=parseInt(localStorage.getItem('extra_total'))||0
+
+function render(){
+
+grid.innerHTML=''
+
+for(let i=1;i<=365;i++){
+
+const d=document.createElement('div')
+
+d.className='box'+(history.includes(i)?' selected':'')
+
+d.textContent=i
+
+d.onclick=()=>toggle(i)
+
+grid.appendChild(d)
+
+}
+
+update()
+
+}
+
+function toggle(n){
+
+if(history.includes(n))
+history=history.filter(x=>x!==n)
+else
+history.push(n)
+
+localStorage.setItem('save_365_v3',JSON.stringify(history))
+
+render()
+
+}
+
+function update(){
+
+const baseSum=history.length*DAILY
+const sum=baseSum+extraTotal
+
+currentTotalEl.textContent=sum.toLocaleString()
+daysEl.textContent=history.length
+document.getElementById('extraTotal').textContent=extraTotal.toLocaleString()
+
+}
+
+function addExtra(){
+
+const input=document.getElementById('extraInput')
+const val=parseInt(input.value)
+
+if(!val || val<=0) return
+
+extraTotal+=val
+
+localStorage.setItem('extra_total',extraTotal)
+
+input.value=''
+
+update()
+
+}
+
+function resetData(){
+
+if(confirm('確定清除？')){
+
+history=[]
+extraTotal=0
+
+localStorage.removeItem('save_365_v3')
+localStorage.removeItem('extra_total')
+
+render()
+
+}
+
+}
+
+render()
+
+</script>
+
+</body>
+</html>
