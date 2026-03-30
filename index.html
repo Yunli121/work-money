@@ -5,9 +5,12 @@
 <link rel="icon" type="image/png" href="icon.png">
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>🌙 50元存錢計畫 🌙</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
 :root{
@@ -21,29 +24,129 @@
 body{
 margin:0;
 padding:15px;
-font-family:-apple-system;
-background:linear-gradient(135deg,#0b1220,#162447);
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+background:linear-gradient(135deg,#0b1220 0%,#162447 100%);
 display:flex;
 justify-content:center;
+overflow-x:hidden;
 min-height:100vh;
+}
+
+.stars,.meteors{
+position:fixed;
+inset:0;
+pointer-events:none;
+z-index:-4;
+}
+
+.star{
+position:absolute;
+background:white;
+border-radius:50%;
+animation:twinkle 3s infinite;
+}
+
+@keyframes twinkle{
+0%,100%{opacity:.3}
+50%{opacity:1}
+}
+
+.meteor{
+position:absolute;
+width:120px;
+height:2px;
+background:linear-gradient(90deg,white,transparent);
+transform:rotate(-45deg);
+animation:shoot 1.2s linear forwards;
+}
+
+@keyframes shoot{
+from{transform:translate(0,0) rotate(-45deg);opacity:1}
+to{transform:translate(-600px,600px) rotate(-45deg);opacity:0}
+}
+
+.moon{
+position:fixed;
+top:-40px;
+right:-40px;
+width:160px;
+height:160px;
+border-radius:50%;
+background:#fffbe6;
+box-shadow:0 0 50px rgba(255,252,220,0.6);
+z-index:-2;
+}
+
+.moon::after{
+content:"";
+position:absolute;
+inset:0;
+background:var(--sky);
+border-radius:50%;
+transform:translateX(var(--phase,0%));
+transition:.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+.cloud{
+position:fixed;
+background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.25) 0%,rgba(255,255,255,0) 70%);
+filter:blur(25px);
+border-radius:50%;
+z-index:-2;
+animation:float 25s ease-in-out infinite alternate;
+}
+
+.c1{width:300px;height:100px;bottom:15%;left:-50px;}
+.c2{width:400px;height:120px;bottom:30%;right:-100px;animation-delay:-5s;}
+
+@keyframes float{
+from{transform:translateX(0)}
+to{transform:translateX(60px)}
 }
 
 .container{
 background:var(--glass);
 backdrop-filter:blur(20px);
+-webkit-backdrop-filter:blur(20px);
 max-width:500px;
 width:100%;
-padding:20px;
-border-radius:25px;
-color:white;
+padding:24px 12px;
+border-radius:30px;
+border:1px solid var(--glass-border);
+box-shadow:0 20px 50px rgba(0,0,0,0.5);
 text-align:center;
+z-index:1;
 }
 
-.stats{margin-bottom:15px;}
+h1{
+color:#fff;
+font-size:1.1rem;
+letter-spacing:2px;
+margin-bottom:20px;
+}
+
+.stats{
+display:flex;
+flex-direction:column;
+gap:8px;
+margin-bottom:20px;
+}
+
 .stat{
 display:flex;
 justify-content:space-between;
-margin-bottom:8px;
+align-items:center;
+background:rgba(255,255,255,0.06);
+border-radius:12px;
+padding:10px 16px;
+font-size:13px;
+color:rgba(255,255,255,0.7);
+}
+
+.stat span{
+font-weight:bold;
+color:var(--blue);
+font-size:15px;
 }
 
 .grid{
@@ -60,41 +163,88 @@ align-items:center;
 justify-content:center;
 font-size:9px;
 cursor:pointer;
+transition:all 0.3s ease;
 background:rgba(255,255,255,0.05);
 color:rgba(255,255,255,0.4);
+border:1px solid rgba(255,255,255,0.03);
 }
 
 .box.selected{
-background:white;
+background:rgba(255,255,255,0.85);
 color:#0b1220;
 font-weight:bold;
+box-shadow:0 0 12px var(--gold-glow);
+border:1px solid #fff;
+transform:scale(1.05);
 }
 
-input{
+.floating{
+position:fixed;
+bottom:30px;
+right:20px;
+width:75px;
+height:75px;
+background:rgba(255,255,255,0.12);
+backdrop-filter:blur(12px);
+-webkit-backdrop-filter:blur(12px);
+border:2px solid rgba(255,228,132,0.5);
+border-radius:50%;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+box-shadow:0 5px 20px rgba(0,0,0,0.3);
+z-index:10;
+}
+
+.floating .val{
+font-size:16px;
+font-weight:800;
+color:#ffe484;
+}
+
+.floating .label{
+font-size:10px;
+color:white;
+opacity:.7;
+margin-top:2px;
+}
+
+.reset{
+margin-top:25px;
+background:none;
 border:none;
-border-radius:5px;
-padding:3px;
-text-align:center;
+color:rgba(255,255,255,0.25);
+font-size:11px;
+text-decoration:underline;
+cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
+<div class="stars" id="stars"></div>
+<div class="meteors" id="meteors"></div>
+<div class="moon" id="moon"></div>
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+
 <div class="container">
 
-<h3>🌙 50元存錢計畫 🌙</h3>
+<h1>🌙 50元存錢計畫 🌙</h1>
 
 <div class="stats">
 <div class="stat">累計 <span>$<span id="currentTotal">0</span></span></div>
-<div class="stat">總目標 <span>$18,250</span></div>
-<div class="stat">完成 <span><span id="days">0</span>/365</span></div>
+<div class="stat">總目標 <span>$<span id="maxTotal">18,250</span></span></div>
+<div class="stat">完成進度 <span><span id="days">0</span> / 365</span></div>
 
+<!-- ⭐ 新增功能 -->
 <div class="stat">
 額外存入 
 <span>
-<input id="extraInput" type="number" placeholder="金額">
-<button onclick="addExtra()">加入</button>
+<input id="extraInput" type="number" placeholder="金額" style="width:70px;">
+<button onclick="addExtra()">+</button>
 </span>
 </div>
 
@@ -106,24 +256,50 @@ text-align:center;
 
 <div class="grid" id="grid"></div>
 
-<button onclick="resetData()">重設</button>
+<button class="reset" onclick="resetData()">重設進度資料</button>
 
+</div>
+
+<div class="floating">
+<div class="val" id="percent">0%</div>
+<div class="label">達成率</div>
 </div>
 
 <script>
 
 const DAILY = 50
+const MAX_TOTAL = 18250
+
+const starsBox=document.getElementById('stars')
+
+for(let i=0;i<80;i++){
+const star=document.createElement('div')
+star.className='star'
+star.style.left=Math.random()*100+'%'
+star.style.top=Math.random()*100+'%'
+star.style.width=star.style.height=(Math.random()*2+1)+'px'
+star.style.animationDelay=(Math.random()*5)+'s'
+starsBox.appendChild(star)
+}
 
 const grid=document.getElementById('grid')
 const currentTotalEl=document.getElementById('currentTotal')
 const daysEl=document.getElementById('days')
+const percentEl=document.getElementById('percent')
+const moon=document.getElementById('moon')
+const meteorsBox=document.getElementById('meteors')
 
 let history=JSON.parse(localStorage.getItem('save_365_v3'))||[]
-let extraTotal=parseInt(localStorage.getItem('extra_total'))||0
+let meteorTimer=null
+
+/* ⭐ 新增 */
+let extraTotal = parseInt(localStorage.getItem('extra_total')) || 0
 
 function render(){
 
 grid.innerHTML=''
+
+const fragment=document.createDocumentFragment()
 
 for(let i=1;i<=365;i++){
 
@@ -135,9 +311,11 @@ d.textContent=i
 
 d.onclick=()=>toggle(i)
 
-grid.appendChild(d)
+fragment.appendChild(d)
 
 }
+
+grid.appendChild(fragment)
 
 update()
 
@@ -158,35 +336,68 @@ render()
 
 function update(){
 
-const baseSum=history.length*DAILY
-const sum=baseSum+extraTotal
+const baseSum = history.length * DAILY
+const sum = baseSum + extraTotal
+
+const count=history.length
+const dayPercent=count/365
 
 currentTotalEl.textContent=sum.toLocaleString()
-daysEl.textContent=history.length
-document.getElementById('extraTotal').textContent=extraTotal.toLocaleString()
+
+daysEl.textContent=count
+
+percentEl.textContent=(dayPercent*100).toFixed(1)+'%'
+
+document.getElementById('extraTotal').textContent = extraTotal.toLocaleString()
+
+moon.style.setProperty('--phase',(dayPercent*100)+'%')
+
+if(dayPercent===1)startMeteor()
+else stopMeteor()
 
 }
 
+/* ⭐ 新增 */
 function addExtra(){
 
-const input=document.getElementById('extraInput')
-const val=parseInt(input.value)
+const input = document.getElementById('extraInput')
+const val = parseInt(input.value)
 
-if(!val || val<=0) return
+if(!val || val <= 0) return
 
-extraTotal+=val
+extraTotal += val
 
-localStorage.setItem('extra_total',extraTotal)
+localStorage.setItem('extra_total', extraTotal)
 
-input.value=''
+input.value = ''
 
 update()
 
 }
 
+function startMeteor(){
+
+if(meteorTimer)return
+
+meteorTimer=setInterval(()=>{
+const m=document.createElement('div')
+m.className='meteor'
+m.style.top=Math.random()*40+'%'
+m.style.left=Math.random()*100+'%'
+meteorsBox.appendChild(m)
+setTimeout(()=>m.remove(),1200)
+},600)
+
+}
+
+function stopMeteor(){
+clearInterval(meteorTimer)
+meteorTimer=null
+}
+
 function resetData(){
 
-if(confirm('確定清除？')){
+if(confirm('確定要清除所有進度嗎？')){
 
 history=[]
 extraTotal=0
