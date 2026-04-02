@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<title>🌙 50元存錢計畫 🌙</title>
+<title>🌙 存錢計畫 🌙</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -167,6 +167,7 @@ transition:all 0.3s ease;
 background:rgba(255,255,255,0.05);
 color:rgba(255,255,255,0.4);
 border:1px solid rgba(255,255,255,0.03);
+overflow: hidden;
 }
 
 .box.selected{
@@ -176,6 +177,7 @@ font-weight:bold;
 box-shadow:0 0 12px var(--gold-glow);
 border:1px solid #fff;
 transform:scale(1.05);
+font-size: 8px; /* 縮小一點以容納較大金額 */
 }
 
 .floating{
@@ -232,26 +234,12 @@ cursor:pointer;
 
 <div class="container">
 
-<h1>🌙 50元存錢計畫 🌙</h1>
+<h1>🌙 存錢計畫 🌙</h1>
 
 <div class="stats">
-<div class="stat">累計 <span>$<span id="currentTotal">0</span></span></div>
-<div class="stat">總目標 <span>$<span id="maxTotal">18,250</span></span></div>
+<div class="stat">累計總額 <span>$<span id="currentTotal">0</span></span></div>
+<div class="stat">預設目標 <span>$18,250</span></div>
 <div class="stat">完成進度 <span><span id="days">0</span> / 365</span></div>
-
-<!-- ⭐ 新增功能 -->
-<div class="stat">
-額外存入 
-<span>
-<input id="extraInput" type="number" placeholder="金額" style="width:70px;">
-<button onclick="addExtra()">+</button>
-</span>
-</div>
-
-<div class="stat">
-額外累計 <span>$<span id="extraTotal">0</span></span>
-</div>
-
 </div>
 
 <div class="grid" id="grid"></div>
@@ -266,153 +254,110 @@ cursor:pointer;
 </div>
 
 <script>
+// 改為物件儲存 { index: amount }
+let history = JSON.parse(localStorage.getItem('save_365_flex')) || {};
+const starsBox = document.getElementById('stars');
+const grid = document.getElementById('grid');
+const currentTotalEl = document.getElementById('currentTotal');
+const daysEl = document.getElementById('days');
+const percentEl = document.getElementById('percent');
+const moon = document.getElementById('moon');
+const meteorsBox = document.getElementById('meteors');
 
-const DAILY = 50
-const MAX_TOTAL = 18250
-
-const starsBox=document.getElementById('stars')
-
-for(let i=0;i<80;i++){
-const star=document.createElement('div')
-star.className='star'
-star.style.left=Math.random()*100+'%'
-star.style.top=Math.random()*100+'%'
-star.style.width=star.style.height=(Math.random()*2+1)+'px'
-star.style.animationDelay=(Math.random()*5)+'s'
-starsBox.appendChild(star)
+// 繪製星星背景
+for(let i=0; i<80; i++){
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random()*100+'%';
+    star.style.top = Math.random()*100+'%';
+    star.style.width = star.style.height = (Math.random()*2+1)+'px';
+    star.style.animationDelay = (Math.random()*5)+'s';
+    starsBox.appendChild(star);
 }
-
-const grid=document.getElementById('grid')
-const currentTotalEl=document.getElementById('currentTotal')
-const daysEl=document.getElementById('days')
-const percentEl=document.getElementById('percent')
-const moon=document.getElementById('moon')
-const meteorsBox=document.getElementById('meteors')
-
-let history=JSON.parse(localStorage.getItem('save_365_v3'))||[]
-let meteorTimer=null
-
-/* ⭐ 新增 */
-let extraTotal = parseInt(localStorage.getItem('extra_total')) || 0
 
 function render(){
+    grid.innerHTML = '';
+    const fragment = document.createDocumentFragment();
 
-grid.innerHTML=''
-
-const fragment=document.createDocumentFragment()
-
-for(let i=1;i<=365;i++){
-
-const d=document.createElement('div')
-
-d.className='box'+(history.includes(i)?' selected':'')
-
-d.textContent=i
-
-d.onclick=()=>toggle(i)
-
-fragment.appendChild(d)
-
+    for(let i=1; i<=365; i++){
+        const d = document.createElement('div');
+        const isSaved = history.hasOwnProperty(i);
+        
+        d.className = 'box' + (isSaved ? ' selected' : '');
+        // 如果存過錢，顯示金額；沒存過顯示日期序號
+        d.textContent = isSaved ? history[i] : i;
+        d.onclick = () => handleInput(i);
+        fragment.appendChild(d);
+    }
+    grid.appendChild(fragment);
+    update();
 }
 
-grid.appendChild(fragment)
-
-update()
-
+function handleInput(n) {
+    if (history.hasOwnProperty(n)) {
+        if(confirm(`第 ${n} 天已存入 $${history[n]}，要取消此筆記錄嗎？`)) {
+            delete history[n];
+            saveAndRender();
+        }
+    } else {
+        const amount = prompt(`第 ${n} 天存入多少元？`, "50");
+        if (amount !== null && amount !== "" && !isNaN(amount)) {
+            history[n] = parseInt(amount);
+            saveAndRender();
+        }
+    }
 }
 
-function toggle(n){
-
-if(history.includes(n))
-history=history.filter(x=>x!==n)
-else
-history.push(n)
-
-localStorage.setItem('save_365_v3',JSON.stringify(history))
-
-render()
-
+function saveAndRender() {
+    localStorage.setItem('save_365_flex', JSON.stringify(history));
+    render();
 }
 
 function update(){
+    const keys = Object.keys(history);
+    const count = keys.length;
+    // 計算所有數值的總和
+    const sum = Object.values(history).reduce((a, b) => a + b, 0);
+    const dayPercent = count / 365;
 
-const baseSum = history.length * DAILY
-const sum = baseSum + extraTotal
+    currentTotalEl.textContent = sum.toLocaleString();
+    daysEl.textContent = count;
+    percentEl.textContent = (dayPercent * 100).toFixed(1) + '%';
+    
+    // 月相隨進度變化
+    moon.style.setProperty('--phase', (dayPercent * 100) + '%');
 
-const count=history.length
-const dayPercent=count/365
-
-currentTotalEl.textContent=sum.toLocaleString()
-
-daysEl.textContent=count
-
-percentEl.textContent=(dayPercent*100).toFixed(1)+'%'
-
-document.getElementById('extraTotal').textContent = extraTotal.toLocaleString()
-
-moon.style.setProperty('--phase',(dayPercent*100)+'%')
-
-if(dayPercent===1)startMeteor()
-else stopMeteor()
-
+    if(dayPercent >= 1) startMeteor();
+    else stopMeteor();
 }
 
-/* ⭐ 新增 */
-function addExtra(){
-
-const input = document.getElementById('extraInput')
-const val = parseInt(input.value)
-
-if(!val || val <= 0) return
-
-extraTotal += val
-
-localStorage.setItem('extra_total', extraTotal)
-
-input.value = ''
-
-update()
-
-}
-
+let meteorTimer = null;
 function startMeteor(){
-
-if(meteorTimer)return
-
-meteorTimer=setInterval(()=>{
-const m=document.createElement('div')
-m.className='meteor'
-m.style.top=Math.random()*40+'%'
-m.style.left=Math.random()*100+'%'
-meteorsBox.appendChild(m)
-setTimeout(()=>m.remove(),1200)
-},600)
-
+    if(meteorTimer) return;
+    meteorTimer = setInterval(() => {
+        const m = document.createElement('div');
+        m.className = 'meteor';
+        m.style.top = Math.random()*40+'%';
+        m.style.left = Math.random()*100+'%';
+        meteorsBox.appendChild(m);
+        setTimeout(() => m.remove(), 1200);
+    }, 600);
 }
 
 function stopMeteor(){
-clearInterval(meteorTimer)
-meteorTimer=null
+    clearInterval(meteorTimer);
+    meteorTimer = null;
 }
 
 function resetData(){
-
-if(confirm('確定要清除所有進度嗎？')){
-
-history=[]
-extraTotal=0
-
-localStorage.removeItem('save_365_v3')
-localStorage.removeItem('extra_total')
-
-render()
-
+    if(confirm('確定要清除所有進度與金額資料嗎？')){
+        history = {};
+        localStorage.removeItem('save_365_flex');
+        render();
+    }
 }
 
-}
-
-render()
-
+render();
 </script>
 
 </body>
