@@ -1,415 +1,203 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" type="image/png" href="icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>薪資即時計算</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #e0f2fe; /* 奶藍色背景 */
+            --card-bg: #ffffff;
+            --border: #000000;
+            --plus-bg: #f0fdf4;
+            --minus-bg: #fef2f2;
+            --final-panel-bg: #ccfbf1; /* 換成清爽的薄荷綠 */
+            --final-text: #134e4a;    /* 深綠色文字，避免刺眼 */
+        }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent; 
+        }
 
-<title>🌙 存錢計畫 🌙</title>
+        body { background-color: var(--bg-color); padding: 20px; margin: 0; }
+        
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 3px solid var(--border);
+            box-shadow: 8px 8px 0px var(--border);
+            padding: 20px;
+        }
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        h2 { 
+            font-weight: 900; 
+            border-bottom: 4px solid var(--border); 
+            padding-bottom: 10px; 
+            margin-top: 0;
+            color: #0369a1; /* 深藍標題 */
+        }
 
-<style>
-:root{
---sky:#0b1220;
---blue:#89bdf0;
---glass:rgba(255,255,255,0.08);
---glass-border:rgba(255,255,255,0.15);
---gold-glow:rgba(255,228,132,0.5);
---accent:#ffe484;
-}
+        section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px solid var(--border);
+            box-shadow: 4px 4px 0px var(--border);
+        }
 
-body{
-margin:0;
-padding:15px;
-font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-background:linear-gradient(135deg,#0b1220 0%,#162447 100%);
-display:flex;
-justify-content:center;
-overflow-x:hidden;
-min-height:100vh;
-}
+        .plus-section { background-color: var(--plus-bg); }
+        .minus-section { background-color: var(--minus-bg); }
 
-.stars,.meteors{
-position:fixed;
-inset:0;
-pointer-events:none;
-z-index:-4;
-}
+        .section-title { font-weight: 900; margin-bottom: 12px; display: block; }
 
-.star{
-position:absolute;
-background:white;
-border-radius:50%;
-animation:twinkle 3s infinite;
-}
+        .input-item { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 5px; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            font-size: 20px; 
+            font-weight: 700;
+            outline: none;
+            background: white;
+            border-radius: 0;
+        }
 
-@keyframes twinkle{
-0%,100%{opacity:.3}
-50%{opacity:1}
-}
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-.meteor{
-position:absolute;
-width:120px;
-height:2px;
-background:linear-gradient(90deg,white,transparent);
-transform:rotate(-45deg);
-animation:shoot 1.2s linear forwards;
-}
+        .summary-box {
+            background: #fff;
+            border: 2px solid var(--border);
+            padding: 10px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+        }
 
-@keyframes shoot{
-from{transform:translate(0,0) rotate(-45deg);opacity:1}
-to{transform:translate(-600px,600px) rotate(-45deg);opacity:0}
-}
+        /* 這裡改掉黑色了！ */
+        .final-result-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: var(--final-panel-bg);
+            color: var(--final-text);
+            text-align: center;
+            border: 3px solid var(--border);
+            box-shadow: 6px 6px 0px var(--border);
+        }
 
-.moon{
-position:fixed;
-top:-40px;
-right:-40px;
-width:160px;
-height:160px;
-border-radius:50%;
-background:#fffbe6;
-box-shadow:0 0 50px rgba(255,252,220,0.6);
-z-index:-2;
-}
-
-.moon::after{
-content:"";
-position:absolute;
-inset:0;
-background:var(--sky);
-border-radius:50%;
-transform:translateX(var(--phase,0%));
-transition:.8s cubic-bezier(0.4,0,0.2,1);
-}
-
-.cloud{
-position:fixed;
-background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.25) 0%,rgba(255,255,255,0) 70%);
-filter:blur(25px);
-border-radius:50%;
-z-index:-2;
-animation:float 25s ease-in-out infinite alternate;
-}
-
-.c1{width:300px;height:100px;bottom:15%;left:-50px;}
-.c2{width:400px;height:120px;bottom:30%;right:-100px;animation-delay:-5s;}
-
-@keyframes float{
-from{transform:translateX(0)}
-to{transform:translateX(60px)}
-}
-
-.container{
-background:var(--glass);
-backdrop-filter:blur(20px);
--webkit-backdrop-filter:blur(20px);
-max-width:500px;
-width:100%;
-padding:24px 12px;
-border-radius:30px;
-border:1px solid var(--glass-border);
-box-shadow:0 20px 50px rgba(0,0,0,0.5);
-text-align:center;
-z-index:1;
-}
-
-h1{
-color:#fff;
-font-size:1.1rem;
-letter-spacing:2px;
-margin-bottom:15px;
-}
-
-/* 新增自訂按鈕樣式 */
-.action-bar {
-margin-bottom: 20px;
-}
-
-.custom-btn {
-background: rgba(255, 228, 132, 0.2);
-border: 1px solid var(--accent);
-color: var(--accent);
-padding: 10px 20px;
-border-radius: 50px;
-font-size: 14px;
-cursor: pointer;
-transition: 0.3s;
-font-weight: bold;
-}
-
-.custom-btn:active {
-transform: scale(0.95);
-background: var(--accent);
-color: #0b1220;
-}
-
-.stats{
-display:flex;
-flex-direction:column;
-gap:8px;
-margin-bottom:20px;
-}
-
-.stat{
-display:flex;
-justify-content:space-between;
-align-items:center;
-background:rgba(255,255,255,0.06);
-border-radius:12px;
-padding:10px 16px;
-font-size:13px;
-color:rgba(255,255,255,0.7);
-}
-
-.stat span{
-font-weight:bold;
-color:var(--blue);
-font-size:15px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(10,1fr);
-gap:5px;
-}
-
-.box{
-aspect-ratio:1;
-border-radius:5px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:9px;
-cursor:pointer;
-transition:all 0.3s ease;
-background:rgba(255,255,255,0.05);
-color:rgba(255,255,255,0.4);
-border:1px solid rgba(255,255,255,0.03);
-overflow: hidden;
-}
-
-.box.selected{
-background:rgba(255,255,255,0.85);
-color:#0b1220;
-font-weight:bold;
-box-shadow:0 0 12px var(--gold-glow);
-border:1px solid #fff;
-transform:scale(1.05);
-}
-
-.box.custom-val {
-color: #d44c4c; /* 自訂金額用不同顏色標示，若想維持黑色可改回 #0b1220 */
-font-size: 8px;
-}
-
-.floating{
-position:fixed;
-bottom:30px;
-right:20px;
-width:75px;
-height:75px;
-background:rgba(255,255,255,0.12);
-backdrop-filter:blur(12px);
--webkit-backdrop-filter:blur(12px);
-border:2px solid rgba(255,228,132,0.5);
-border-radius:50%;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-box-shadow:0 5px 20px rgba(0,0,0,0.3);
-z-index:10;
-}
-
-.floating .val{
-font-size:16px;
-font-weight:800;
-color:#ffe484;
-}
-
-.floating .label{
-font-size:10px;
-color:white;
-opacity:.7;
-margin-top:2px;
-}
-
-.reset{
-margin-top:25px;
-background:none;
-border:none;
-color:rgba(255,255,255,0.25);
-font-size:11px;
-text-decoration:underline;
-cursor:pointer;
-}
-</style>
+        .final-label { font-size: 1rem; margin-bottom: 5px; display: block; font-weight: 700; }
+        .final-amount { 
+            font-size: 2.8rem; 
+            font-weight: 900; 
+            color: #0d9488; /* 漂亮的深青色 */
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="stars" id="stars"></div>
-<div class="meteors" id="meteors"></div>
-<div class="moon" id="moon"></div>
-<div class="cloud c1"></div>
-<div class="cloud c2"></div>
+<div class="app-container">
+    <h2>薪資詳細計算</h2>
 
-<div class="container">
+    <section class="plus-section">
+        <span class="section-title">➕ 應發項目</span>
+        <div class="input-item">
+            <label>本薪</label>
+            <input type="number" class="salary-input plus" id="baseSalary" value="0" onfocus="clearZero(this)" oninput="updateAll()">
+        </div>
+        <div class="input-item">
+            <label>伙食津貼</label>
+            <input type="number" class="salary-input plus" id="foodAllowance" value="0" onfocus="clearZero(this)" oninput="updateAll()">
+        </div>
+        <div class="input-item">
+            <label>節慶/其他獎金</label>
+            <input type="number" class="salary-input plus" id="bonus" value="0" onfocus="clearZero(this)" oninput="updateAll()">
+        </div>
+        <div class="summary-box">
+            <span>應發合計</span>
+            <span id="totalPlus">$0</span>
+        </div>
+    </section>
 
-<h1>🌙 存錢計畫 🌙</h1>
+    <section class="minus-section">
+        <span class="section-title">➖ 應扣項目</span>
+        <div class="input-item">
+            <label>遲到扣薪</label>
+            <input type="number" class="salary-input minus" id="lateDeduction" value="0" onfocus="clearZero(this)" oninput="updateAll()">
+        </div>
+        <div class="input-item">
+            <label>病假/生理假扣薪</label>
+            <input type="number" class="salary-input minus" id="leaveDeduction" value="0" onfocus="clearZero(this)" oninput="updateAll()">
+        </div>
+        <div class="input-item">
+            <label>勞保費</label>
+            <input type="number" class="salary-input minus" id="laborIns" value="0" onfocus="clearZero(this)" oninput="updateAll()">
+        </div>
+        <div class="input-item">
+            <label>健保費</label>
+            <input type="number" class="salary-input minus" id="healthIns" value="0" onfocus="clearZero(this)" oninput="updateAll()">
+        </div>
+        <div class="summary-box">
+            <span>應扣合計</span>
+            <span id="totalMinus">$0</span>
+        </div>
+    </section>
 
-<div class="action-bar">
-    <button class="custom-btn" onclick="addCustom()">✨ 存入自訂金額</button>
-</div>
-
-<div class="stats">
-<div class="stat">累計總金額 <span>$<span id="currentTotal">0</span></span></div>
-<div class="stat">進度 <span><span id="days">0</span> / 365 天</span></div>
-</div>
-
-<div class="grid" id="grid"></div>
-
-<button class="reset" onclick="resetData()">重設進度資料</button>
-
-</div>
-
-<div class="floating">
-<div class="val" id="percent">0%</div>
-<div class="label">達成率</div>
+    <div class="final-result-box">
+        <span class="final-label">實發總額</span>
+        <span class="final-amount" id="finalNet">$0</span>
+    </div>
 </div>
 
 <script>
-const DAILY = 50
-const starsBox=document.getElementById('stars')
+    window.onload = function() {
+        const savedData = JSON.parse(localStorage.getItem('salaryData'));
+        if (savedData) {
+            Object.keys(savedData).forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = savedData[id];
+            });
+        }
+        updateAll();
+    };
 
-// 初始化背景星星
-for(let i=0;i<80;i++){
-    const star=document.createElement('div')
-    star.className='star'
-    star.style.left=Math.random()*100+'%'
-    star.style.top=Math.random()*100+'%'
-    star.style.width=star.style.height=(Math.random()*2+1)+'px'
-    star.style.animationDelay=(Math.random()*5)+'s'
-    starsBox.appendChild(star)
-}
-
-const grid=document.getElementById('grid')
-const currentTotalEl=document.getElementById('currentTotal')
-const daysEl=document.getElementById('days')
-const percentEl=document.getElementById('percent')
-const moon=document.getElementById('moon')
-const meteorsBox=document.getElementById('meteors')
-
-// 格式改為物件：{ index: amount }
-let history = JSON.parse(localStorage.getItem('save_365_v4')) || {}
-
-function render(){
-    grid.innerHTML=''
-    const fragment=document.createDocumentFragment()
-
-    for(let i=1;i<=365;i++){
-        const d=document.createElement('div')
-        const hasValue = history.hasOwnProperty(i)
-        
-        d.className = 'box' + (hasValue ? ' selected' : '')
-        if(hasValue && history[i] !== DAILY) d.classList.add('custom-val')
-        
-        // 如果有存錢顯示金額，否則顯示天數
-        d.textContent = hasValue ? history[i] : i
-        d.onclick = () => toggle(i)
-        fragment.appendChild(d)
-    }
-    grid.appendChild(fragment)
-    update()
-}
-
-// 點擊格子：預設切換 50 元
-function toggle(n){
-    if(history.hasOwnProperty(n)) {
-        delete history[n]
-    } else {
-        history[n] = DAILY
-    }
-    save()
-}
-
-// 自訂金額按鈕：尋找下一個空格填入
-function addCustom() {
-    const val = prompt("請輸入要存入的金額：", "100");
-    if (val === null || val === "" || isNaN(val)) return;
-    
-    const amount = parseInt(val);
-    // 尋找第一個還沒存錢的格子索引
-    let targetIndex = -1;
-    for(let i=1; i<=365; i++) {
-        if(!history.hasOwnProperty(i)) {
-            targetIndex = i;
-            break;
+    function clearZero(input) {
+        if (input.value === "0") {
+            input.value = "";
         }
     }
 
-    if(targetIndex !== -1) {
-        history[targetIndex] = amount;
-        save();
-    } else {
-        alert("已經存滿 365 天囉！");
+    function updateAll() {
+        let currentData = {};
+        
+        const plusInputs = document.querySelectorAll('.plus');
+        let sumPlus = 0;
+        plusInputs.forEach(input => {
+            let val = parseFloat(input.value) || 0;
+            sumPlus += val;
+            currentData[input.id] = input.value;
+        });
+        document.getElementById('totalPlus').innerText = `$${sumPlus.toLocaleString()}`;
+
+        const minusInputs = document.querySelectorAll('.minus');
+        let sumMinus = 0;
+        minusInputs.forEach(input => {
+            let val = parseFloat(input.value) || 0;
+            sumMinus += val;
+            currentData[input.id] = input.value;
+        });
+        document.getElementById('totalMinus').innerText = `$${sumMinus.toLocaleString()}`;
+
+        const final = sumPlus - sumMinus;
+        document.getElementById('finalNet').innerText = `$${final.toLocaleString()}`;
+
+        localStorage.setItem('salaryData', JSON.stringify(currentData));
     }
-}
-
-function save() {
-    localStorage.setItem('save_365_v4', JSON.stringify(history))
-    render()
-}
-
-function update(){
-    const keys = Object.keys(history)
-    const count = keys.length
-    // 總和計算：加總物件內所有的數值
-    const sum = Object.values(history).reduce((a, b) => a + b, 0)
-    const dayPercent = count / 365
-
-    currentTotalEl.textContent = sum.toLocaleString()
-    daysEl.textContent = count
-    percentEl.textContent = (dayPercent * 100).toFixed(1) + '%'
-    moon.style.setProperty('--phase', (dayPercent * 100) + '%')
-
-    if(dayPercent >= 1) startMeteor()
-    else stopMeteor()
-}
-
-let meteorTimer=null
-function startMeteor(){
-    if(meteorTimer)return
-    meteorTimer=setInterval(()=>{
-        const m=document.createElement('div')
-        m.className='meteor'
-        m.style.top=Math.random()*40+'%'
-        m.style.left=Math.random()*100+'%'
-        meteorsBox.appendChild(m)
-        setTimeout(()=>m.remove(),1200)
-    },600)
-}
-
-function stopMeteor(){
-    clearInterval(meteorTimer)
-    meteorTimer=null
-}
-
-function resetData(){
-    if(confirm('確定要清除所有進度與金額資料嗎？')){
-        history = {}
-        localStorage.removeItem('save_365_v4')
-        render()
-    }
-}
-
-render()
 </script>
 
 </body>
